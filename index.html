@@ -45,6 +45,8 @@
   .bar i { display: block; height: 100%; background: #ffd166; border-radius: 3px; }
   .new { font-size: 13px; font-weight: 800; letter-spacing: 2px; color: #3ddc84; text-transform: uppercase; }
   .demo { width: 160px; height: 110px; margin: 6px auto 0; display: block; }
+  .ov { scrollbar-width: none; }
+  .ov::-webkit-scrollbar { display: none; }
 </style>
 </head>
 <body>
@@ -491,7 +493,7 @@ function drawDemo(f) {
   if (f === 'hidden') { const top = { segs: [{ a: { x: 2.6, y: .4 }, b: { x: 2.6, y: 3.6 } }], hw: .4, col: '#f7d6a8', screws: [{ x: 2.6, y: .4 }, { x: 2.6, y: 3.6 }] };
     screw(c, 2.6 * U, 1.2 * U, SR * U, '#8b93a7', .4, { hidden: true }); drawPlank(c, top, U, 0, 0);
     for (const s of top.screws) screw(c, s.x * U, s.y * U, SR * U, '#3ddc84', .4); screw(c, 4.6 * U, 3 * U, SR * U, '#8b93a7', .4, { hidden: true }); }
-  if (f === 'lock') { screw(c, 2.6 * U, 3 * U, SR * U * 1.3, '#ffd166', .4, { lock: 4 }); }
+  if (f === 'lock') { screw(c, 2.65 * U, 2.9 * U, SR * U * 2.6, '#ffd166', .4, { lock: 4 }); }
 }
 
 // --- dotyk ---

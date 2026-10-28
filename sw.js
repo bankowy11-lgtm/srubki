@@ -1,5 +1,5 @@
 // Network-first: always fresh when online, works offline from cache.
-const CACHE = 'srubki-v1';
+const CACHE = 'srubki-v2';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
 
 self.addEventListener('install', e => {
