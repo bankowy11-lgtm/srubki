@@ -9,59 +9,114 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-  html, body { margin: 0; height: 100%; background: #1d2433; overflow: hidden; touch-action: none;
+  /* Warsztat: grafitowa tablica z dziurkami, ciepłe światło lampy, mosiężny akcent. Skrzynki i półka u góry, plansza w środku, narzędzia na dole. */
+  :root {
+    --bg: #1d2433; --panel: rgba(20,26,40,.72); --ink: #eef2fa; --muted: #9aa6c4; --dim: #6c7896;
+    --brass: #ffd166; --brass-ink: #2a1f00; --brass-deep: #b38200; --mint: #3ddc84; --cyan: #5ce1ff; --line: rgba(255,255,255,.13);
+    --display: "Trebuchet MS", "Segoe UI", system-ui, sans-serif; --ui: system-ui, "Segoe UI", Roboto, sans-serif;
+  }
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; touch-action: none;
     user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
-    font-family: system-ui, "Segoe UI", sans-serif; color: #eef2fa; }
+    font-family: var(--ui); color: var(--ink); }
   #cv { display: block; position: fixed; inset: 0; width: 100%; height: 100%; }
-  #top { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center;
-    padding: calc(10px + env(safe-area-inset-top)) 14px 0; pointer-events: none; }
+  button { font-family: var(--ui); color: var(--ink); cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+  #top { position: fixed; top: 0; left: 0; right: 0; display: grid; grid-template-columns: 44px 1fr 44px; align-items: start; gap: 8px;
+    padding: calc(10px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+    pointer-events: none; transition: opacity .3s; }
   #top > * { pointer-events: auto; }
-  #lvl { font-weight: 900; font-size: 20px; color: #ffd166; text-align: center; }
-  #chap { font-size: 12px; color: #9aa6c4; text-align: center; font-weight: 600; }
-  #bottom { position: fixed; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom)); display: flex; justify-content: center; gap: 12px; }
-  .btn { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.16); color: #eef2fa;
-    border-radius: 16px; padding: 10px 14px; font: 600 15px system-ui, sans-serif; cursor: pointer; min-width: 44px; }
-  .btn:active { transform: scale(.95); }
-  .btn[disabled] { opacity: .35; }
-  .btn .n { display: inline-block; margin-left: 6px; background: #ffd166; color: #2a1f00; border-radius: 9px; padding: 0 6px; font-size: 12px; }
-  .ov { position: fixed; inset: 0; display: none; place-items: center; background: rgba(12,16,26,.8);
-    backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); overflow-y: auto; }
-  .ov.show { display: grid; }
-  .card { text-align: center; padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)); max-width: 340px; width: 100%; box-sizing: border-box; }
-  .card h1 { margin: 0 0 4px; font-size: 46px; color: #ffd166; text-shadow: 0 3px 0 #8a5a00; }
-  .card h2 { margin: 0 0 8px; font-size: 28px; color: #ffd166; }
-  .card p { color: #c9d2e6; margin: 8px 0 18px; line-height: 1.45; }
-  .big { background: #ffd166; color: #2a1f00; border: 0; border-radius: 22px; padding: 14px 34px;
-    font: 800 19px system-ui, sans-serif; box-shadow: 0 5px 0 #b38200; cursor: pointer; }
-  .big:active { transform: translateY(3px); box-shadow: 0 2px 0 #b38200; }
-  .chapters { display: grid; gap: 8px; margin: 18px 0 4px; text-align: left; }
-  .ch { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 9px 12px; }
-  .ch.cur { border-color: #ffd166; background: rgba(255,209,102,.1); }
-  .ch.lock { opacity: .55; }
-  .ch .t { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; gap: 8px; }
-  .ch .t span:last-child { color: #9aa6c4; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .ch .s { font-size: 12px; color: #9aa6c4; margin-top: 2px; }
-  .bar { height: 6px; background: rgba(0,0,0,.35); border-radius: 3px; margin-top: 6px; overflow: hidden; }
-  .bar i { display: block; height: 100%; background: #ffd166; border-radius: 3px; }
-  .new { font-size: 13px; font-weight: 800; letter-spacing: 2px; color: #3ddc84; text-transform: uppercase; }
-  .demo { width: 160px; height: 110px; margin: 6px auto 0; display: block; }
-  .ov { scrollbar-width: none; }
+  .round { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); font-size: 18px; display: grid; place-items: center; }
+  .round:active { transform: scale(.94); }
+  .stats { display: flex; justify-content: center; gap: 5px; min-width: 0; }
+  .stat { flex: 1 1 0; min-width: 0; max-width: 78px; padding: 5px 4px 6px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); text-align: center; }
+  .stat small { display: block; font-size: 9px; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat b { display: block; font: 800 20px/1.1 var(--display); color: var(--ink); font-variant-numeric: tabular-nums; }
+  .stat.lv b { color: var(--brass); }
+  #chap { grid-column: 1 / -1; text-align: center; font-size: 11px; letter-spacing: 1.2px; color: var(--dim); text-transform: uppercase; font-weight: 700; margin-top: -2px; }
+
+  #bottom { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 8px;
+    padding: 0 max(12px, env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); transition: opacity .3s; }
+  .tool { position: relative; width: 84px; padding: 8px 4px 7px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel);
+    display: grid; justify-items: center; gap: 2px; font-size: 11.5px; font-weight: 700; }
+  .tool .i { font-size: 19px; line-height: 1.1; }
+  .tool:active { transform: scale(.95); }
+  .tool[disabled] { opacity: .35; }
+  .tool .n { position: absolute; top: -6px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--brass); color: var(--brass-ink);
+    font-size: 11px; font-weight: 800; display: grid; place-items: center; padding: 0 4px; box-sizing: border-box; }
+  .tool.hint { border-color: rgba(92,225,255,.45); }
+
+  #toast { position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); transform: translate(-50%, 10px); opacity: 0;
+    padding: 9px 14px; border-radius: 14px; background: rgba(16,20,32,.94); border: 1px solid var(--line); font-size: 13.5px; font-weight: 600;
+    max-width: min(320px, calc(100vw - 32px)); text-align: center; transition: opacity .25s, transform .25s; pointer-events: none; }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  .ov { position: fixed; inset: 0; display: none; place-items: center; background: rgba(12,16,26,.82);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); overflow-y: auto; scrollbar-width: none; }
   .ov::-webkit-scrollbar { display: none; }
+  .ov.show { display: grid; }
+  .card { text-align: center; padding: calc(22px + env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+    max-width: 360px; width: 100%; box-sizing: border-box; }
+  .eyebrow { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--mint); font-weight: 800; }
+  .card h1 { margin: 4px 0 6px; font: 800 50px/1 var(--display); color: var(--brass); text-shadow: 0 3px 0 #8a5a00; }
+  .card h2 { margin: 2px 0 8px; font: 800 30px/1.1 var(--display); color: var(--brass); text-wrap: balance; }
+  .card p { color: #c9d2e6; margin: 8px 0 18px; line-height: 1.45; font-size: 15px; }
+  .big { background: var(--brass); color: var(--brass-ink); border: 0; border-radius: 22px; padding: 14px 34px;
+    font: 800 19px var(--ui); box-shadow: 0 5px 0 var(--brass-deep); }
+  .big:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--brass-deep); }
+  .link { background: none; border: 0; color: var(--muted); font-weight: 700; font-size: 14px; padding: 12px; }
+
+  .stars { display: flex; justify-content: center; gap: 10px; margin: 8px 0 4px; font-size: 42px; line-height: 1; }
+  .stars span { color: #2e3750; }
+  .stars span.on { color: var(--brass); text-shadow: 0 0 14px rgba(255,209,102,.7); animation: pop .5s cubic-bezier(.2,1.6,.4,1) both; }
+  .stars span.on:nth-child(2) { animation-delay: .18s; } .stars span.on:nth-child(3) { animation-delay: .36s; }
+  @keyframes pop { from { transform: scale(0) rotate(-40deg); opacity: 0; } to { transform: none; opacity: 1; } }
+  .winstats { display: flex; justify-content: center; gap: 8px; margin: 12px 0 16px; }
+  .winstats .stat { flex: 0 0 76px; }
+
+  .chapters { display: grid; gap: 8px; margin: 18px 0 4px; text-align: left; }
+  .ch { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 9px 12px; }
+  .ch.cur { border-color: rgba(255,209,102,.8); background: rgba(255,209,102,.08); }
+  .ch.lock { opacity: .5; }
+  .ch button.head { all: unset; display: block; width: 100%; cursor: pointer; }
+  .ch .t { display: flex; justify-content: space-between; align-items: baseline; font-weight: 700; font-size: 14px; gap: 8px; }
+  .ch .t span:last-child { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 13px; }
+  .ch .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .bar { height: 5px; background: rgba(0,0,0,.35); border-radius: 3px; margin-top: 7px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--brass); border-radius: 3px; }
+  .levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+  .levels button { border: 1px solid var(--line); background: rgba(16,20,32,.8); border-radius: 12px; padding: 7px 0 5px; font: 800 15px var(--display);
+    font-variant-numeric: tabular-nums; display: grid; gap: 1px; }
+  .levels button small { font-size: 9px; letter-spacing: 1px; color: var(--brass); font-family: var(--ui); }
+  .levels button.now { border-color: var(--brass); box-shadow: 0 0 12px rgba(255,209,102,.3); }
+  .levels button[disabled] { opacity: .3; }
+
+  .new { font-size: 12px; font-weight: 800; letter-spacing: 3px; color: var(--mint); text-transform: uppercase; }
+  .demo { width: 160px; height: 110px; margin: 6px auto 0; display: block; }
+  @media (prefers-reduced-motion: reduce) { .stars span.on { animation: none; } #toast { transition: none; } }
 </style>
 </head>
 <body>
 <canvas id="cv"></canvas>
 <div id="top">
-  <button class="btn" id="snd" aria-label="Dźwięk">🔊</button>
-  <div><div id="lvl">Poziom 1</div><div id="chap"></div></div>
-  <button class="btn" id="menuBtn" aria-label="Menu">☰</button>
+  <button class="round" id="snd" aria-label="Dźwięk">🔊</button>
+  <div class="stats">
+    <div class="stat lv"><small id="lvlL">Poziom</small><b id="lvl">1</b></div>
+    <div class="stat"><small id="leftL">Śrubki</small><b id="left">0</b></div>
+    <div class="stat"><small id="progL">Postęp</small><b id="prog">0%</b></div>
+  </div>
+  <button class="round" id="menuBtn" aria-label="Menu">☰</button>
+  <div id="chap"></div>
 </div>
 <div id="bottom">
-  <button class="btn" id="restart">↻ <span id="restartL">Od nowa</span></button>
-  <button class="btn" id="slot">＋ <span id="slotL">Miejsce</span><span class="n" id="slotN">1</span></button>
+  <button class="tool" id="restart"><span class="i">↻</span><span id="restartL">Od nowa</span></button>
+  <button class="tool hint" id="hintBtn"><span class="i">✦</span><span id="hintL">Podpowiedź</span><span class="n" id="hintN">3</span></button>
+  <button class="tool" id="slot"><span class="i">＋</span><span id="slotL">Miejsce</span><span class="n" id="slotN">1</span></button>
 </div>
+<div id="toast" role="status"></div>
 
 <div class="ov show" id="menu"><div class="card">
+  <div class="eyebrow" id="tagline">Łamigłówka z odkręcaniem</div>
   <h1 id="title">Śrubki</h1>
   <p id="howto">Stuknij śrubkę, żeby ją wykręcić. Trafi do skrzynki w swoim kolorze albo na półkę. Zasłoniętych śrubek nie da się ruszyć.</p>
   <button class="big" id="play">Graj</button>
@@ -75,15 +130,23 @@
   <button class="big" id="introGo">Rozumiem</button>
 </div></div>
 <div class="ov" id="win"><div class="card">
+  <div class="eyebrow" id="winEyebrow"></div>
   <h2 id="winT">Rozkręcone!</h2>
+  <div class="stars" id="winStars"><span>★</span><span>★</span><span>★</span></div>
+  <div class="winstats">
+    <div class="stat"><small id="wScrewsL">Śrubki</small><b id="wScrews">0</b></div>
+    <div class="stat"><small id="wHelpL">Pomoce</small><b id="wHelp">0</b></div>
+    <div class="stat"><small id="wTotalL">Gwiazdki</small><b id="wTotal">0</b></div>
+  </div>
   <p id="winInfo"></p>
-  <div class="chapters" id="winChap"></div>
-  <button class="big" id="next">Dalej</button>
+  <button class="big" id="next">Następny poziom</button>
+  <div><button class="link" id="again">↻ <span id="againL">Zagraj jeszcze raz</span></button></div>
 </div></div>
 <div class="ov" id="lose"><div class="card">
   <h2 id="loseT">Półka pełna!</h2>
   <p id="loseP">Zabrakło miejsca na śrubki. Najpierw kręć te, które pasują do skrzynek, i zdejmuj deski, które zasłaniają najwięcej.</p>
   <button class="big" id="retry">Jeszcze raz</button>
+  <div><button class="link" id="loseMenu">☰ Menu</button></div>
 </div></div>
 
 <script>
@@ -93,6 +156,7 @@ const COLS = 6, ROWS = 8, SR = .22, MAX_LEVEL = 100;
 const LANG = (navigator.languages && navigator.languages[0] || navigator.language || 'en').toLowerCase().startsWith('pl') ? 'pl' : 'en';
 const tr = (pl, en) => LANG === 'pl' ? pl : en;
 document.documentElement.lang = LANG;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SCREW_COLORS = ['#ff5d6c', '#4da3ff', '#ffd166', '#3ddc84', '#b07cff', '#ff9a3c', '#3fe0e0'];
 const PLANK_COLORS = ['#e9c891', '#a7d8f0', '#f3b3c8', '#c5e3a5', '#d4c4f5', '#f7d6a8', '#b8e6d9', '#f0c4a0'];
 // rozdziały po 10 poziomów; każdy z pierwszych pięciu wprowadza coś nowego
@@ -118,6 +182,7 @@ const CHAPTERS = [
 ];
 const chapterOf = lv => Math.min(Math.floor((lv - 1) / 10), CHAPTERS.length - 1);
 const featureFrom = f => CHAPTERS.findIndex(c => c.feature === f) * 10 + 1;
+const hintsFor = lv => lv >= 71 ? 2 : 3;   // od „Wieży zegarowej” mniej podpowiedzi
 
 const $ = id => document.getElementById(id);
 const cv = $('cv'), ctx = cv.getContext('2d');
@@ -125,7 +190,10 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
-let level = store.get('sr_level', 1), muted = store.get('sr_muted', false), seen = store.get('sr_seen', []);
+// level = najwyższy odblokowany poziom, playing = poziom, który właśnie gramy (można wracać do ukończonych)
+let level = store.get('sr_level', 1), playing = level, muted = store.get('sr_muted', false), seen = store.get('sr_seen', []);
+let starsBy = store.get('sr_starsBy', {}), openChapter = -1;
+const totalStars = () => Object.values(starsBy).reduce((a, b) => a + b, 0);
 
 // --- dźwięk ---
 let actx = null;
@@ -147,9 +215,11 @@ const S = {
   blocked: () => tone(150, .14, 'square', .05),
   reveal: () => tone(1250, .12, 'sine', .06),
   unlock: () => { tone(700, .08, 'square', .04); tone(1050, .14, 'triangle', .06, .07); },
+  hint: () => { tone(1319, .18, 'sine', .06); tone(1760, .25, 'sine', .05, .08); },
   box: () => [660, 880, 1100].forEach((f, i) => tone(f, .18, 'triangle', .07, i * .06)),
   fall: () => tone(300, .5, 'sine', .08, 0, .35),
   win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .35, 'triangle', .09, i * .11)),
+  star: i => tone([784, 988, 1175][i], .3, 'triangle', .08),
   lose: () => [330, 262, 196].forEach((f, i) => tone(f, .35, 'triangle', .08, i * .15)),
 };
 const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
@@ -240,36 +310,55 @@ function makeLevel(lv) {
 }
 
 // --- stan ---
-let planks, queue, boxes, leaving, shelf, shelfCap, slotLeft, state = 'menu', falling = [], sparks = [], removedCount = 0;
-function startLevel() {
-  const L = makeLevel(level);
-  planks = L.planks; queue = L.queue.slice();
-  boxes = [newBox(), newBox()]; leaving = []; shelf = []; shelfCap = 5; slotLeft = 1; falling = []; sparks = []; removedCount = 0;
-  for (const p of planks) for (const s of p.screws) { s.state = 'board'; s.px = null; s.spin = 0; s.shake = 0; s.wasLocked = !!s.lock; }
+let planks, allScrews, queue, boxes, leaving, shelf, shelfCap, slotLeft, hintLeft, helpers, state = 'menu';
+let falling = [], sparks = [], rings = [], removedCount = 0, hint = null, plan = null, celebrateT = 0;
+function startLevel(lv = playing) {
+  playing = lv;
+  const Lv = makeLevel(lv);
+  planks = Lv.planks; queue = Lv.queue.slice(); allScrews = planks.flatMap(p => p.screws);
+  allScrews.forEach((s, i) => { s.id = i; s.state = 'board'; s.px = null; s.spin = 0; s.shake = 0; s.wasLocked = !!s.lock; });
+  boxes = [newBox(), newBox()]; leaving = []; shelf = []; shelfCap = 5; slotLeft = 1; hintLeft = hintsFor(lv); helpers = 0;
+  falling = []; sparks = []; rings = []; removedCount = 0; hint = null; plan = null; celebrateT = 0;
   state = 'play'; layout(); hud();
 }
 function newBox() { return queue.length ? { c: queue.shift(), screws: [], born: performance.now() } : null; }
 function hud() {
-  $('lvl').textContent = tr('Poziom ', 'Level ') + level;
-  $('chap').textContent = CHAPTERS[chapterOf(level)].name;
+  $('lvl').textContent = String(playing).padStart(2, '0');
+  const total = allScrews ? allScrews.length : 0;
+  $('left').textContent = total - removedCount;
+  $('prog').textContent = (total ? Math.round(removedCount / total * 100) : 0) + '%';
+  $('chap').textContent = CHAPTERS[chapterOf(playing)].name;
   $('slotN').textContent = slotLeft; $('slot').disabled = !slotLeft || state !== 'play';
+  $('hintN').textContent = hintLeft; $('hintBtn').disabled = !hintLeft || state !== 'play';
   $('snd').textContent = muted ? '🔇' : '🔊';
+  const inGame = state === 'play' || state === 'celebrate' || state === 'lost';
+  $('top').style.opacity = $('bottom').style.opacity = inGame ? 1 : 0;
+}
+let toastT = 0;
+function toast(msg) {
+  const el = $('toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2200);
 }
 const blocked = s => planks.some(q => q.alive && q.z > s.z && covers(q, s.x, s.y));
 const locked = s => s.lock > removedCount;
 
 function tapScrew(s) {
-  if (blocked(s) || locked(s)) { s.shake = performance.now(); S.blocked(); buzz(20); return; }
+  if (blocked(s)) { s.shake = performance.now(); S.blocked(); buzz(20); toast(tr('Ta śrubka jest zasłonięta. Najpierw zdejmij deskę, która leży wyżej.', 'This screw is covered. Remove the board on top first.')); return; }
+  if (locked(s)) { s.shake = performance.now(); S.blocked(); buzz(20); const k = s.lock - removedCount; toast(tr(`Kłódka: wykręć jeszcze ${k} ${k === 1 ? 'śrubkę' : k < 5 ? 'śrubki' : 'śrubek'}.`, `Padlock: unscrew ${k} more ${k === 1 ? 'screw' : 'screws'} first.`)); return; }
   const bi = boxes.findIndex(b => b && b.c === s.c && b.screws.length < 3);
   if (bi >= 0) { boxes[bi].screws.push(s); s.state = 'box'; }
   else if (shelf.length < shelfCap) { shelf.push(s); s.state = 'shelf'; }
   else return;
+  if (plan && plan.moves[plan.i] === s.id) plan.i++; else plan = null;
+  hint = null;
   s.spin = 1; s.hidden = false; removedCount++; S.unscrew(); buzz(8);
+  rings.push({ x: ox + s.x * u, y: oy + s.y * u, c: SCREW_COLORS[s.c], t0: performance.now() });
   const p = planks[s.z];
   if (p.screws.every(x => x.state !== 'board')) {
     p.alive = false; S.fall();
     falling.push({ p, ox: 0, oy: 0, vx: (Math.random() - .5) * 2, vy: -1, rot: 0, vr: (Math.random() - .5) * .05 });
   }
+  hud();
   setTimeout(settle, 380);
 }
 function settle() {
@@ -281,6 +370,7 @@ function settle() {
       const b = boxes[i];
       if (b && b.screws.length === 3) {
         leaving.push({ b, i, t0: performance.now() }); S.box(); buzz([10, 30, 10]);
+        for (let k = 0; k < 16; k++) sparks.push({ x: boxX(i) + (Math.random() - .5) * boxW, y: boxY + 30, vx: (Math.random() - .5) * 4, vy: -Math.random() * 4 - 1, life: 1, c: SCREW_COLORS[b.c] });
         boxes[i] = newBox(); changed = true;
       }
       const nb = boxes[i];
@@ -290,67 +380,137 @@ function settle() {
     }
   }
   const left = planks.some(p => p.screws.some(s => s.state === 'board'));
-  if (!left && !shelf.length) { state = 'won'; setTimeout(win, 600); return; }
+  if (!left && !shelf.length) { celebrate(); return; }
   if (shelf.length >= shelfCap) {
     const playable = planks.some(p => p.screws.some(s => s.state === 'board' && !blocked(s) && !locked(s) && boxes.some(b => b && b.c === s.c && b.screws.length < 3)));
     if (!playable) { state = 'lost'; setTimeout(lose, 500); }
+    else if (shelf.length >= shelfCap) toast(tr('Półka pełna! Teraz tylko śrubki pasujące do skrzynek.', 'Shelf full! Only screws that match a box now.'));
   }
   hud();
 }
 
+// --- podpowiedź: przeszukanie stanów gry; plan jest zapamiętany, dopóki gracz go wykonuje ---
+function solveFrom(limit = 60000) {
+  const cap = shelfCap, ids = allScrews;
+  const removed0 = new Set(ids.filter(s => s.state !== 'board').map(s => s.id));
+  let nodes = 0; const seenK = new Set();
+  function rec(removed, q, bx, sh) {
+    if (++nodes > limit) return null;
+    bx = bx.map(b => b && { ...b }); sh = sh.slice(); q = q.slice();
+    let ch = true;
+    while (ch) { ch = false; for (let i = 0; i < 2; i++) { if (bx[i] && bx[i].n === 3) { bx[i] = q.length ? { c: q.shift(), n: 0 } : null; ch = true; } const b = bx[i]; if (b) for (let k = 0; k < sh.length && b.n < 3; k++) if (sh[k] === b.c) { sh.splice(k, 1); k--; b.n++; ch = true; } } }
+    if (removed.size === ids.length) return sh.length ? null : [];
+    const key = [...removed].sort((a, b) => a - b).join(',') + '|' + sh.slice().sort().join('') + '|' + bx.map(b => b ? b.c + ':' + b.n : 'x').join(',') + '|' + q.length;
+    if (seenK.has(key)) return null; seenK.add(key);
+    const alive = z => planks[z].screws.some(s => !removed.has(s.id));
+    const free = ids.filter(s => !removed.has(s.id) && removed.size >= s.lock && !planks.some(p => p.z > s.z && alive(p.z) && covers(p, s.x, s.y)));
+    free.sort((a, b) => (bx.some(x => x && x.c === b.c && x.n < 3) ? 1 : 0) - (bx.some(x => x && x.c === a.c && x.n < 3) ? 1 : 0));
+    for (const s of free) {
+      const nb = bx.map(b => b && { ...b }), bi = nb.findIndex(b => b && b.c === s.c && b.n < 3); let ns = sh;
+      if (bi >= 0) nb[bi].n++; else if (sh.length < cap) ns = [...sh, s.c]; else continue;
+      const r = new Set(removed); r.add(s.id);
+      const path = rec(r, q, nb, ns);
+      if (path) return [s.id, ...path];
+    }
+    return null;
+  }
+  return rec(removed0, queue, boxes.map(b => b && { c: b.c, n: b.screws.length }), shelf.map(s => s.c));
+}
+function useHint() {
+  if (!hintLeft || state !== 'play') return;
+  audio();
+  if (!plan || plan.i >= plan.moves.length || allScrews[plan.moves[plan.i]].state !== 'board') {
+    const moves = solveFrom();
+    plan = moves && moves.length ? { moves, i: 0 } : null;
+  }
+  if (!plan) { toast(tr('Stąd nie da się już przejść. Użyj dodatkowego miejsca albo zacznij od nowa.', 'This can’t be finished from here. Use an extra slot or restart.')); S.blocked(); return; }
+  hintLeft--; helpers++; hint = { id: plan.moves[plan.i], t0: performance.now() }; S.hint(); hud();
+}
+
+// --- wygrana i przegrana ---
+function celebrate() {
+  state = 'celebrate'; celebrateT = performance.now(); S.win(); buzz([20, 60, 20, 60, 40]);
+  for (let i = 0; i < 70; i++) sparks.push({ x: W / 2 + (Math.random() - .5) * W * .8, y: oy + u * ROWS * (.3 + Math.random() * .6), vx: (Math.random() - .5) * 3,
+    vy: -3 - Math.random() * 5, life: 1.6, c: SCREW_COLORS[Math.floor(Math.random() * SCREW_COLORS.length)], screw: true, rot: Math.random() * 6 });
+  hud();
+  setTimeout(win, REDUCED ? 300 : 1300);
+}
+function win() {
+  if (state !== 'celebrate' && state !== 'play') return;
+  state = 'won';
+  const stars = helpers === 0 ? 3 : helpers === 1 ? 2 : 1;
+  const before = starsBy[playing] || 0;
+  starsBy[playing] = Math.max(before, stars);
+  const done = playing;
+  if (playing === level) level++;
+  store.set('sr_level', level); store.set('sr_starsBy', starsBy);
+  const chapterDone = done % 10 === 0 && done <= MAX_LEVEL && done === level - 1;
+  $('winEyebrow').textContent = tr('Poziom ', 'Level ') + done;
+  $('winT').textContent = chapterDone ? tr('Rozdział ukończony!', 'Chapter complete!') : [tr('Rozkręcone!', 'All unscrewed!'), tr('Świetna robota!', 'Nice work!'), tr('Udało się!', 'You did it!')][3 - stars];
+  [...$('winStars').children].forEach((s, i) => { s.classList.remove('on'); void s.offsetWidth; if (i < stars) s.classList.add('on'); });
+  for (let i = 0; i < stars; i++) setTimeout(() => S.star(i), 200 + i * 180);
+  $('wScrews').textContent = allScrews.length; $('wHelp').textContent = helpers; $('wTotal').textContent = totalStars();
+  $('winInfo').textContent = chapterDone
+    ? (done === MAX_LEVEL ? tr('Wszystkie 100 poziomów za Tobą! Dalej czekają poziomy bez końca.', 'All 100 levels done! Endless levels await.')
+      : tr(`„${CHAPTERS[chapterOf(done)].name}” zaliczony. Następny: „${CHAPTERS[chapterOf(done + 1)].name}”.`, `“${CHAPTERS[chapterOf(done)].name}” complete. Next: “${CHAPTERS[chapterOf(done + 1)].name}”.`))
+    : stars < 3 ? tr('Przejdź bez podpowiedzi i dodatkowego miejsca, żeby zdobyć 3 gwiazdki.', 'Finish without hints or an extra slot for 3 stars.')
+    : before === 3 ? tr('Znowu trzy gwiazdki!', 'Three stars again!') : tr('Trzy gwiazdki bez żadnej pomocy!', 'Three stars with no help at all!');
+  $('win').classList.add('show'); hud();
+}
+function lose() { $('lose').classList.add('show'); S.lose(); buzz(80); hud(); }
+
 // --- ekrany ---
-function chapterRows(el, onlyCurrent) {
+function chapterRows(el) {
   const cur = chapterOf(level);
-  const list = onlyCurrent ? [cur] : CHAPTERS.map((_, i) => i);
-  el.innerHTML = list.map(i => {
-    const c = CHAPTERS[i], done = Math.max(0, Math.min(10, level - 1 - i * 10)), lock = i > cur;
-    const range = `${i * 10 + 1}–${i * 10 + 10}`;
-    return `<div class="ch${i === cur ? ' cur' : ''}${lock ? ' lock' : ''}">
-      <div class="t"><span>${lock ? '🔒 ' : done === 10 ? '✓ ' : ''}${c.name}</span><span>${lock ? tr('poz. ', 'lv. ') + range : done + ' / 10'}</span></div>
-      <div class="s">${c.note}</div>${lock ? '' : `<div class="bar"><i style="width:${done * 10}%"></i></div>`}</div>`;
+  el.innerHTML = CHAPTERS.map((c, i) => {
+    const done = Math.max(0, Math.min(10, level - 1 - i * 10)), lock = i > cur;
+    let st = 0; for (let l = i * 10 + 1; l <= i * 10 + 10; l++) st += starsBy[l] || 0;
+    const grid = !lock && openChapter === i ? `<div class="levels">${Array.from({ length: 10 }, (_, k) => {
+      const lv = i * 10 + k + 1, s = starsBy[lv] || 0;
+      return `<button data-lv="${lv}" class="${lv === level ? 'now' : ''}" ${lv > level ? 'disabled' : ''}>${lv}<small>${s ? '★'.repeat(s) : lv === level ? '•' : '&nbsp;'}</small></button>`;
+    }).join('')}</div>` : '';
+    return `<div class="ch${i === cur ? ' cur' : ''}${lock ? ' lock' : ''}"><button class="head" data-ch="${i}" ${lock ? 'tabindex="-1"' : ''}>
+      <div class="t"><span>${lock ? '🔒 ' : done === 10 ? '✓ ' : ''}${c.name}</span><span>${lock ? tr('poz. ', 'lv. ') + (i * 10 + 1) + '–' + (i * 10 + 10) : '★ ' + st + ' / 30'}</span></div>
+      <div class="s">${c.note}</div>${lock ? '' : `<div class="bar"><i style="width:${done * 10}%"></i></div>`}</button>${grid}</div>`;
   }).join('') + (level > MAX_LEVEL ? `<div class="ch cur"><div class="t"><span>${tr('Bez końca', 'Endless')}</span><span>${tr('poz. ', 'lv. ')}${level}</span></div><div class="s">${tr('wszystkie rozdziały ukończone, kolejne poziomy są losowane', 'all chapters complete, new levels are generated')}</div></div>` : '');
 }
 function showMenu() {
   state = 'menu';
+  if (openChapter < 0) openChapter = chapterOf(level);
   $('play').textContent = level > 1 ? tr('Graj · poziom ', 'Play · level ') + level : tr('Graj', 'Play');
-  chapterRows($('chapters'), false);
-  $('menu').classList.add('show');
+  chapterRows($('chapters'));
+  $('win').classList.remove('show'); $('lose').classList.remove('show'); $('menu').classList.add('show'); hud();
 }
-function begin() {
-  $('menu').classList.remove('show');
-  const ch = CHAPTERS[chapterOf(level)];
-  if (ch.feature && !seen.includes(ch.feature) && level <= MAX_LEVEL) {
+$('chapters').addEventListener('click', e => {
+  const lvBtn = e.target.closest('button[data-lv]');
+  if (lvBtn) { audio(); begin(+lvBtn.dataset.lv); return; }
+  const head = e.target.closest('button[data-ch]');
+  if (head && !head.closest('.lock')) { const i = +head.dataset.ch; openChapter = openChapter === i ? -2 : i; chapterRows($('chapters')); tone(880, .08, 'triangle', .04); }
+});
+function begin(lv = level) {
+  playing = lv;
+  $('menu').classList.remove('show'); $('win').classList.remove('show'); $('lose').classList.remove('show');
+  const ch = CHAPTERS[chapterOf(lv)];
+  if (ch.feature && !seen.includes(ch.feature) && lv <= MAX_LEVEL) {
     seen.push(ch.feature); store.set('sr_seen', seen);
     $('introT').textContent = ch.title; $('introP').textContent = ch.text;
-    drawDemo(ch.feature); $('intro').classList.add('show');
+    state = 'intro'; drawDemo(ch.feature); $('intro').classList.add('show'); hud();
     return;
   }
-  startLevel();
+  startLevel(lv);
 }
-function win() {
-  const done = level; level++; store.set('sr_level', level);
-  const chapterDone = done % 10 === 0 && done <= MAX_LEVEL;
-  $('winT').textContent = chapterDone ? tr('Rozdział ukończony!', 'Chapter complete!') : tr('Rozkręcone!', 'All unscrewed!');
-  $('winInfo').textContent = chapterDone
-    ? (done === MAX_LEVEL ? tr('Wszystkie 100 poziomów za Tobą! Dalej czekają poziomy bez końca.', 'All 100 levels done! Endless levels await.')
-      : tr(`„${CHAPTERS[chapterOf(done)].name}” zaliczony. Następny: „${CHAPTERS[chapterOf(level)].name}”.`, `“${CHAPTERS[chapterOf(done)].name}” complete. Next: “${CHAPTERS[chapterOf(level)].name}”.`))
-    : tr(`Poziom ${done} ukończony.`, `Level ${done} complete.`);
-  chapterRows($('winChap'), true);
-  $('win').classList.add('show'); S.win();
-}
-function lose() { $('lose').classList.add('show'); S.lose(); buzz(80); }
 
 // --- układ ---
-let W, H, DPR, u, ox, oy, boxY, boxW, shelfY;
+let W, H, DPR, u, ox, oy, boxY, boxW, shelfY, bgCanvas;
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2.5);
   W = innerWidth; H = innerHeight;
   cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  layout();
+  layout(); buildBg();
 }
 function layout() {
-  boxY = 70; boxW = Math.min(160, W * .42); shelfY = boxY + 96;
-  const top = shelfY + 46, bottom = 76;
+  boxY = 100; boxW = Math.min(160, W * .42); shelfY = boxY + 96;
+  const top = shelfY + 42, bottom = 96;
   u = Math.min((W - 24) / COLS, (H - top - bottom) / ROWS);
   ox = (W - u * COLS) / 2; oy = top + ((H - top - bottom) - u * ROWS) / 2;
 }
@@ -358,6 +518,23 @@ addEventListener('resize', resize);
 const boxX = i => W / 2 + (i === 0 ? -1 : 1) * (boxW / 2 + 8);
 function holeXY(i, k) { return { x: boxX(i) + (k - 1) * boxW * .28, y: boxY + 30 }; }
 function shelfXY(k) { const sw = Math.min(46, (W - 30) / shelfCap); return { x: W / 2 + (k - (shelfCap - 1) / 2) * sw, y: shelfY }; }
+
+// tło warsztatu: grafitowa ściana, snop światła lampy, faktura desek
+function buildBg() {
+  bgCanvas = document.createElement('canvas'); bgCanvas.width = W * DPR; bgCanvas.height = H * DPR;
+  const b = bgCanvas.getContext('2d'); b.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const g = b.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#262f44'); g.addColorStop(1, '#131824');
+  b.fillStyle = g; b.fillRect(0, 0, W, H);
+  b.strokeStyle = 'rgba(255,255,255,.025)'; b.lineWidth = 1;
+  for (let x = 0; x < W; x += 46) { b.beginPath(); b.moveTo(x + .5, 0); b.lineTo(x + .5, H); b.stroke(); }
+  const lamp = b.createRadialGradient(W / 2, -40, 10, W / 2, H * .25, H * .8);
+  lamp.addColorStop(0, 'rgba(255,214,140,.16)'); lamp.addColorStop(1, 'rgba(255,214,140,0)');
+  b.fillStyle = lamp; b.fillRect(0, 0, W, H);
+  const vig = b.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .8);
+  vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,.35)');
+  b.fillStyle = vig; b.fillRect(0, 0, W, H);
+}
+const dust = Array.from({ length: REDUCED ? 8 : 28 }, () => ({ x: Math.random(), y: Math.random(), s: .3 + Math.random() * .7, p: Math.random() * 7 }));
 
 // --- rysowanie ---
 function rr(c, x, y, w, h, r) { c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
@@ -377,7 +554,6 @@ function screw(c, x, y, r, col, ang, opts = {}) {
     c.restore();
   }
   if (opts.lock) {
-    // kłódka z licznikiem
     const lx = x + r * .75, ly = y - r * .75, s = r * .62;
     c.strokeStyle = '#d7dbe6'; c.lineWidth = s * .28;
     c.beginPath(); c.arc(lx, ly - s * .35, s * .45, Math.PI, 0); c.stroke();
@@ -404,6 +580,12 @@ function drawPlank(c, p, U, X, Y, dx = 0, dy = 0, rot = 0) {
   c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 10; c.shadowOffsetY = 4;
   c.globalAlpha = .9; c.fillStyle = p.col; c.fill('nonzero'); c.globalAlpha = 1;
   c.shadowColor = 'transparent'; c.shadowBlur = 0; c.shadowOffsetY = 0;
+  // połysk na górnej krawędzi deski
+  c.save(); plankPath(c, p, U, X, Y); c.clip();
+  const sh = c.createLinearGradient(0, Y + (cen.y - 1) * U, 0, Y + (cen.y + 1) * U);
+  sh.addColorStop(0, 'rgba(255,255,255,.22)'); sh.addColorStop(.5, 'rgba(255,255,255,0)');
+  c.fillStyle = sh; c.fillRect(X - U, Y + (cen.y - 2) * U, U * (COLS + 2), U * 4); c.restore();
+  plankPath(c, p, U, X, Y);
   c.strokeStyle = 'rgba(0,0,0,.28)'; c.lineWidth = 2; c.stroke();
   for (const s of p.screws) { c.fillStyle = 'rgba(30,25,20,.45)'; c.beginPath(); c.arc(X + s.x * U, Y + s.y * U, SR * U * .95, 0, 7); c.fill(); }
   c.restore();
@@ -418,12 +600,18 @@ function target(s, t) {
 }
 
 function draw(t) {
-  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#232b3d'); g.addColorStop(1, '#151a26');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  if (!planks || state === 'menu') return;
+  ctx.drawImage(bgCanvas, 0, 0, W, H);
+  for (const d of dust) {
+    d.y -= .00006 * d.s * 16; d.x += Math.sin(t / 2500 + d.p) * .00005; if (d.y < -.02) { d.y = 1.02; d.x = Math.random(); }
+    ctx.globalAlpha = (.12 + .14 * Math.sin(t / 900 + d.p * 3)) * d.s; ctx.fillStyle = '#ffe1a8';
+    ctx.beginPath(); ctx.arc(d.x * W, d.y * H, 1 + d.s * 1.4, 0, 7); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  if (!planks || state === 'menu' || state === 'intro') return;
   // tablica z dziurkami
   ctx.fillStyle = '#2c3549'; ctx.beginPath(); rr(ctx, ox - 10, oy - 10, u * COLS + 20, u * ROWS + 20, 18); ctx.fill();
-  ctx.fillStyle = '#242c3d';
+  ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = '#222a3b';
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { ctx.beginPath(); ctx.arc(ox + (x + .5) * u, oy + (y + .5) * u, u * .07, 0, 7); ctx.fill(); }
   // deski i śrubki warstwami
   for (const p of planks) {
@@ -437,6 +625,15 @@ function draw(t) {
       screw(ctx, x, oy + s.y * u, SR * u, s.hidden ? '#8b93a7' : SCREW_COLORS[s.c], .4, { hidden: s.hidden, lock: locked(s) ? s.lock - removedCount : 0 });
     }
   }
+  // podpowiedź: pulsujący pierścień wokół śrubki do wykręcenia
+  if (hint && state === 'play') {
+    const s = allScrews[hint.id];
+    if (s.state === 'board') {
+      const k = ((t - hint.t0) / 800) % 1, x = ox + s.x * u, y = oy + s.y * u;
+      ctx.strokeStyle = `rgba(92,225,255,${1 - k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, SR * u * (1.3 + k * 1.2), 0, 7); ctx.stroke();
+      ctx.strokeStyle = 'rgba(92,225,255,.9)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, SR * u * 1.3, 0, 7); ctx.stroke();
+    } else hint = null;
+  }
   // spadające deski
   for (let i = falling.length - 1; i >= 0; i--) {
     const f = falling[i];
@@ -448,8 +645,10 @@ function draw(t) {
   const drawBox = (b, i, dy, alpha) => {
     const x = boxX(i) - boxW / 2, c = SCREW_COLORS[b.c];
     ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); rr(ctx, x + 2, boxY + dy + 5, boxW, 58, 14); ctx.fill();
     ctx.fillStyle = c; ctx.beginPath(); rr(ctx, x, boxY + dy, boxW, 58, 14); ctx.fill();
-    ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); rr(ctx, x + 4, boxY + dy + 4, boxW - 8, 50, 11); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); rr(ctx, x + 4, boxY + dy + 3, boxW - 8, 10, 6); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); rr(ctx, x + 4, boxY + dy + 14, boxW - 8, 40, 11); ctx.fill();
     for (let k = 0; k < 3; k++) { const h = holeXY(i, k); ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(h.x, h.y + dy, 13, 0, 7); ctx.fill(); }
     ctx.globalAlpha = 1;
   };
@@ -460,9 +659,9 @@ function draw(t) {
     drawBox(L.b, L.i, -k * k * 160, 1 - k);
   }
   // półka
-  ctx.fillStyle = '#2c3549';
   const s0 = shelfXY(0), s1 = shelfXY(shelfCap - 1);
-  ctx.beginPath(); rr(ctx, s0.x - 24, shelfY - 22, s1.x - s0.x + 48, 44, 14); ctx.fill();
+  ctx.fillStyle = '#2c3549'; ctx.beginPath(); rr(ctx, s0.x - 24, shelfY - 22, s1.x - s0.x + 48, 44, 14); ctx.fill();
+  ctx.strokeStyle = shelf.length >= shelfCap - 1 ? 'rgba(255,93,108,.6)' : 'rgba(255,255,255,.06)'; ctx.lineWidth = 1.5; ctx.stroke();
   for (let k = 0; k < shelfCap; k++) {
     const p = shelfXY(k); ctx.fillStyle = shelf.length >= shelfCap - 1 && k >= shelf.length ? 'rgba(255,93,108,.35)' : '#1c2333';
     ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, 7); ctx.fill();
@@ -477,11 +676,20 @@ function draw(t) {
     if (moving) s.spin += .5;
     screw(ctx, s.px, s.py - (moving ? 6 : 0), R, SCREW_COLORS[s.c], s.spin);
   }
-  // iskry
+  // rozbłyski po wykręceniu
+  for (let i = rings.length - 1; i >= 0; i--) {
+    const r = rings[i], k = (t - r.t0) / 420;
+    if (k >= 1) { rings.splice(i, 1); continue; }
+    ctx.globalAlpha = (1 - k) * .9; ctx.strokeStyle = r.c; ctx.lineWidth = 3 * (1 - k) + .5;
+    ctx.beginPath(); ctx.arc(r.x, r.y, SR * u * (1 + k * 1.6), 0, 7); ctx.stroke();
+  }
+  // iskry i konfetti ze śrubek
   for (let i = sparks.length - 1; i >= 0; i--) {
-    const p = sparks[i]; p.x += p.vx; p.y += p.vy; p.vy += .15; p.life -= .03;
+    const p = sparks[i]; p.x += p.vx; p.y += p.vy; p.vy += p.screw ? .12 : .15; p.life -= p.screw ? .012 : .03;
     if (p.life <= 0) { sparks.splice(i, 1); continue; }
-    ctx.globalAlpha = p.life; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 2.4, 0, 7); ctx.fill();
+    ctx.globalAlpha = Math.min(1, p.life);
+    if (p.screw) { p.rot += .2; screw(ctx, p.x, p.y, 7, p.c, p.rot); }
+    else { ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 2.4, 0, 7); ctx.fill(); }
   }
   ctx.globalAlpha = 1;
 }
@@ -517,23 +725,29 @@ cv.addEventListener('pointerdown', e => {
   }
   if (best) tapScrew(best);
 });
-$('slot').onclick = () => { if (slotLeft && state === 'play') { slotLeft--; shelfCap++; tone(660, .2, 'sine', .08); hud(); } };
-$('restart').onclick = () => { if (state === 'play' || state === 'lost') { $('lose').classList.remove('show'); startLevel(); } };
-$('menuBtn').onclick = () => { if (state === 'play' || state === 'lost') { $('lose').classList.remove('show'); showMenu(); } };
+$('slot').onclick = () => { if (slotLeft && state === 'play') { slotLeft--; helpers++; shelfCap++; tone(660, .2, 'sine', .08); hud(); } };
+$('hintBtn').onclick = useHint;
+$('restart').onclick = () => { if (state === 'play' || state === 'lost') { $('lose').classList.remove('show'); startLevel(playing); } };
+$('menuBtn').onclick = () => { if (state === 'play' || state === 'lost') showMenu(); };
 $('snd').onclick = () => { muted = !muted; store.set('sr_muted', muted); hud(); };
-$('play').onclick = () => { audio(); begin(); };
-$('introGo').onclick = () => { $('intro').classList.remove('show'); startLevel(); };
-$('next').onclick = () => { $('win').classList.remove('show'); begin(); };
-$('retry').onclick = () => { $('lose').classList.remove('show'); startLevel(); };
+$('play').onclick = () => { audio(); begin(level); };
+$('introGo').onclick = () => { $('intro').classList.remove('show'); startLevel(playing); };
+$('next').onclick = () => begin(Math.min(playing + 1, level));
+$('again').onclick = () => begin(playing);
+$('retry').onclick = () => { $('lose').classList.remove('show'); startLevel(playing); };
+$('loseMenu').onclick = showMenu;
 
-function loop(t) { draw(t); requestAnimationFrame(loop); }
 function applyTexts() {
   document.title = tr('Śrubki', 'Bolts & Boards');
   $('title').textContent = tr('Śrubki', 'Bolts & Boards');
+  $('tagline').textContent = tr('Łamigłówka z odkręcaniem', 'An unscrewing puzzle');
   $('howto').textContent = tr('Stuknij śrubkę, żeby ją wykręcić. Trafi do skrzynki w swoim kolorze albo na półkę. Zasłoniętych śrubek nie da się ruszyć.',
     'Tap a screw to unscrew it. It goes into the box of its colour or onto the shelf. Covered screws can’t be moved.');
-  $('restartL').textContent = tr('Od nowa', 'Restart'); $('slotL').textContent = tr('Miejsce', 'Slot');
-  $('newL').textContent = tr('Nowość', 'New'); $('introGo').textContent = tr('Rozumiem', 'Got it'); $('next').textContent = tr('Dalej', 'Next');
+  $('lvlL').textContent = tr('Poziom', 'Level'); $('leftL').textContent = tr('Śrubki', 'Screws'); $('progL').textContent = tr('Postęp', 'Progress');
+  $('restartL').textContent = tr('Od nowa', 'Restart'); $('hintL').textContent = tr('Podpowiedź', 'Hint'); $('slotL').textContent = tr('Miejsce', 'Slot');
+  $('newL').textContent = tr('Nowość', 'New'); $('introGo').textContent = tr('Rozumiem', 'Got it');
+  $('wScrewsL').textContent = tr('Śrubki', 'Screws'); $('wHelpL').textContent = tr('Pomoce', 'Helpers'); $('wTotalL').textContent = tr('Gwiazdki', 'Stars');
+  $('next').textContent = tr('Następny poziom', 'Next level'); $('againL').textContent = tr('Zagraj jeszcze raz', 'Play again');
   $('loseT').textContent = tr('Półka pełna!', 'Shelf is full!');
   $('loseP').textContent = tr('Zabrakło miejsca na śrubki. Najpierw kręć te, które pasują do skrzynek, i zdejmuj deski, które zasłaniają najwięcej.',
     'No room left for screws. Unscrew the ones that match a box first, and take off the boards that cover the most.');
@@ -541,7 +755,9 @@ function applyTexts() {
   $('snd').setAttribute('aria-label', tr('Dźwięk', 'Sound'));
 }
 applyTexts();
-resize(); hud(); showMenu(); requestAnimationFrame(loop);
+
+function loop(t) { draw(t); requestAnimationFrame(loop); }
+resize(); showMenu(); requestAnimationFrame(loop);
 document.addEventListener('visibilitychange', () => { if (document.hidden && actx) actx.suspend(); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
