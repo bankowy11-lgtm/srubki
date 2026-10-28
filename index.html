@@ -311,7 +311,7 @@ function makeLevel(lv) {
 
 // --- stan ---
 let planks, allScrews, queue, boxes, leaving, shelf, shelfCap, slotLeft, hintLeft, helpers, state = 'menu';
-let falling = [], sparks = [], rings = [], removedCount = 0, hint = null, plan = null, celebrateT = 0;
+let falling = [], sparks = [], rings = [], removedCount = 0, hint = null, plan = null, celebrateT = 0, shelfWarnT = 0;
 function startLevel(lv = playing) {
   playing = lv;
   const Lv = makeLevel(lv);
@@ -348,7 +348,13 @@ function tapScrew(s) {
   const bi = boxes.findIndex(b => b && b.c === s.c && b.screws.length < 3);
   if (bi >= 0) { boxes[bi].screws.push(s); s.state = 'box'; }
   else if (shelf.length < shelfCap) { shelf.push(s); s.state = 'shelf'; }
-  else return;
+  else {
+    // półka pełna, a śrubka nie pasuje do żadnej skrzynki — wyraźna informacja zamiast cichego ignorowania
+    s.shake = performance.now(); shelfWarnT = performance.now(); S.blocked(); buzz([20, 40, 20]);
+    toast(slotLeft ? tr('Półka pełna! Ta śrubka nie pasuje do żadnej skrzynki. Stuknij „+ Miejsce” albo wykręć śrubkę w kolorze skrzynki.', 'Shelf is full! This screw matches no box. Tap “+ Slot” or unscrew a screw in a box colour.')
+      : tr('Półka pełna! Wykręć śrubkę w kolorze jednej ze skrzynek.', 'Shelf is full! Unscrew a screw that matches one of the boxes.'));
+    return;
+  }
   if (plan && plan.moves[plan.i] === s.id) plan.i++; else plan = null;
   hint = null;
   s.spin = 1; s.hidden = false; removedCount++; S.unscrew(); buzz(8);
@@ -661,7 +667,8 @@ function draw(t) {
   // półka
   const s0 = shelfXY(0), s1 = shelfXY(shelfCap - 1);
   ctx.fillStyle = '#2c3549'; ctx.beginPath(); rr(ctx, s0.x - 24, shelfY - 22, s1.x - s0.x + 48, 44, 14); ctx.fill();
-  ctx.strokeStyle = shelf.length >= shelfCap - 1 ? 'rgba(255,93,108,.6)' : 'rgba(255,255,255,.06)'; ctx.lineWidth = 1.5; ctx.stroke();
+  const warn = shelfWarnT && t - shelfWarnT < 900 ? .5 + .5 * Math.sin((t - shelfWarnT) / 60) : 0;
+  ctx.strokeStyle = warn ? `rgba(255,93,108,${.5 + warn * .5})` : shelf.length >= shelfCap - 1 ? 'rgba(255,93,108,.6)' : 'rgba(255,255,255,.06)'; ctx.lineWidth = warn ? 3 : 1.5; ctx.stroke();
   for (let k = 0; k < shelfCap; k++) {
     const p = shelfXY(k); ctx.fillStyle = shelf.length >= shelfCap - 1 && k >= shelf.length ? 'rgba(255,93,108,.35)' : '#1c2333';
     ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, 7); ctx.fill();
@@ -718,10 +725,13 @@ cv.addEventListener('pointerdown', e => {
   if (state !== 'play') return;
   audio();
   const x = (e.clientX - ox) / u, y = (e.clientY - oy) / u;
-  let best = null;
+  // najbliższa śrubka w zasięgu palca (przy remisie ta, która leży wyżej)
+  let best = null, bd = Infinity;
   for (const p of planks) for (const s of p.screws) {
     if (s.state !== 'board') continue;
-    if (Math.hypot(s.x - x, s.y - y) < .45 && (!best || s.z > best.z)) best = s;
+    const d = Math.hypot(s.x - x, s.y - y);
+    if (d > .62) continue;
+    if (!best || d < bd - .05 || (Math.abs(d - bd) <= .05 && s.z > best.z)) { best = s; bd = d; }
   }
   if (best) tapScrew(best);
 });
