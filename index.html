@@ -57,18 +57,18 @@
   <button class="btn" id="menuBtn" aria-label="Menu">☰</button>
 </div>
 <div id="bottom">
-  <button class="btn" id="restart">↻ Od nowa</button>
-  <button class="btn" id="slot">＋ Miejsce<span class="n" id="slotN">1</span></button>
+  <button class="btn" id="restart">↻ <span id="restartL">Od nowa</span></button>
+  <button class="btn" id="slot">＋ <span id="slotL">Miejsce</span><span class="n" id="slotN">1</span></button>
 </div>
 
 <div class="ov show" id="menu"><div class="card">
-  <h1>Śrubki</h1>
-  <p>Stuknij śrubkę, żeby ją wykręcić. Trafi do skrzynki w swoim kolorze albo na półkę. Zasłoniętych śrubek nie da się ruszyć.</p>
+  <h1 id="title">Śrubki</h1>
+  <p id="howto">Stuknij śrubkę, żeby ją wykręcić. Trafi do skrzynki w swoim kolorze albo na półkę. Zasłoniętych śrubek nie da się ruszyć.</p>
   <button class="big" id="play">Graj</button>
   <div class="chapters" id="chapters"></div>
 </div></div>
 <div class="ov" id="intro"><div class="card">
-  <div class="new">Nowość</div>
+  <div class="new" id="newL">Nowość</div>
   <h2 id="introT"></h2>
   <canvas class="demo" id="demo" width="320" height="220"></canvas>
   <p id="introP"></p>
@@ -81,32 +81,40 @@
   <button class="big" id="next">Dalej</button>
 </div></div>
 <div class="ov" id="lose"><div class="card">
-  <h2>Półka pełna!</h2>
-  <p>Zabrakło miejsca na śrubki. Najpierw kręć te, które pasują do skrzynek, i zdejmuj deski, które zasłaniają najwięcej.</p>
+  <h2 id="loseT">Półka pełna!</h2>
+  <p id="loseP">Zabrakło miejsca na śrubki. Najpierw kręć te, które pasują do skrzynek, i zdejmuj deski, które zasłaniają najwięcej.</p>
   <button class="big" id="retry">Jeszcze raz</button>
 </div></div>
 
 <script>
 'use strict';
 const COLS = 6, ROWS = 8, SR = .22, MAX_LEVEL = 100;
+// język: polski dla telefonów ustawionych na polski, dla wszystkich innych angielski
+const LANG = (navigator.languages && navigator.languages[0] || navigator.language || 'en').toLowerCase().startsWith('pl') ? 'pl' : 'en';
+const tr = (pl, en) => LANG === 'pl' ? pl : en;
+document.documentElement.lang = LANG;
 const SCREW_COLORS = ['#ff5d6c', '#4da3ff', '#ffd166', '#3ddc84', '#b07cff', '#ff9a3c', '#3fe0e0'];
 const PLANK_COLORS = ['#e9c891', '#a7d8f0', '#f3b3c8', '#c5e3a5', '#d4c4f5', '#f7d6a8', '#b8e6d9', '#f0c4a0'];
 // rozdziały po 10 poziomów; każdy z pierwszych pięciu wprowadza coś nowego
 const CHAPTERS = [
-  { name: 'Warsztat', note: 'proste deski' },
-  { name: 'Kątowniki', note: 'deski w kształcie litery L', feature: 'L',
-    title: 'Kątowniki', text: 'Deski w kształcie litery L zasłaniają więcej. Spadną dopiero, gdy wykręcisz z nich wszystkie śrubki.' },
-  { name: 'Krążki', note: 'okrągłe płytki', feature: 'disc',
-    title: 'Krążki', text: 'Okrągła płytka trzyma się na jednej śrubce, ale zasłania wszystko dookoła.' },
-  { name: 'Ukryte śrubki', note: 'kolor widać dopiero po odsłonięciu', feature: 'hidden',
-    title: 'Ukryte śrubki', text: 'Szare śrubki ze znakiem zapytania pokażą swój kolor, gdy nic ich już nie zasłania.' },
-  { name: 'Kłódki', note: 'śrubki z licznikiem', feature: 'lock',
-    title: 'Kłódki', text: 'Śrubka z kłódką otworzy się po wykręceniu tylu innych śrubek, ile pokazuje licznik.' },
-  { name: 'Fabryka', note: 'więcej kolorów' },
-  { name: 'Hala maszyn', note: 'gęstsze warstwy' },
-  { name: 'Wieża zegarowa', note: 'mniej podpowiedzi' },
-  { name: 'Zegarmistrz', note: 'wszystko naraz' },
-  { name: 'Mistrz śrubek', note: 'ostatni sprawdzian' },
+  { name: tr('Warsztat', 'Workshop'), note: tr('proste deski', 'simple boards') },
+  { name: tr('Kątowniki', 'Brackets'), note: tr('deski w kształcie litery L', 'L-shaped boards'), feature: 'L',
+    title: tr('Kątowniki', 'Brackets'), text: tr('Deski w kształcie litery L zasłaniają więcej. Spadną dopiero, gdy wykręcisz z nich wszystkie śrubki.',
+      'L-shaped boards cover more. They only fall once you remove every screw from them.') },
+  { name: tr('Krążki', 'Discs'), note: tr('okrągłe płytki', 'round plates'), feature: 'disc',
+    title: tr('Krążki', 'Discs'), text: tr('Okrągła płytka trzyma się na jednej śrubce, ale zasłania wszystko dookoła.',
+      'A round plate hangs on a single screw, but it covers everything around it.') },
+  { name: tr('Ukryte śrubki', 'Hidden screws'), note: tr('kolor widać dopiero po odsłonięciu', 'colour shows once uncovered'), feature: 'hidden',
+    title: tr('Ukryte śrubki', 'Hidden screws'), text: tr('Szare śrubki ze znakiem zapytania pokażą swój kolor, gdy nic ich już nie zasłania.',
+      'Grey screws with a question mark show their colour once nothing covers them.') },
+  { name: tr('Kłódki', 'Padlocks'), note: tr('śrubki z licznikiem', 'screws with a counter'), feature: 'lock',
+    title: tr('Kłódki', 'Padlocks'), text: tr('Śrubka z kłódką otworzy się po wykręceniu tylu innych śrubek, ile pokazuje licznik.',
+      'A padlocked screw opens after you remove as many other screws as its counter shows.') },
+  { name: tr('Fabryka', 'Factory'), note: tr('więcej kolorów', 'more colours') },
+  { name: tr('Hala maszyn', 'Machine Hall'), note: tr('gęstsze warstwy', 'denser layers') },
+  { name: tr('Wieża zegarowa', 'Clock Tower'), note: tr('mniej podpowiedzi', 'fewer hints') },
+  { name: tr('Zegarmistrz', 'Watchmaker'), note: tr('wszystko naraz', 'everything at once') },
+  { name: tr('Mistrz śrubek', 'Screw Master'), note: tr('ostatni sprawdzian', 'the final test') },
 ];
 const chapterOf = lv => Math.min(Math.floor((lv - 1) / 10), CHAPTERS.length - 1);
 const featureFrom = f => CHAPTERS.findIndex(c => c.feature === f) * 10 + 1;
@@ -242,7 +250,7 @@ function startLevel() {
 }
 function newBox() { return queue.length ? { c: queue.shift(), screws: [], born: performance.now() } : null; }
 function hud() {
-  $('lvl').textContent = 'Poziom ' + level;
+  $('lvl').textContent = tr('Poziom ', 'Level ') + level;
   $('chap').textContent = CHAPTERS[chapterOf(level)].name;
   $('slotN').textContent = slotLeft; $('slot').disabled = !slotLeft || state !== 'play';
   $('snd').textContent = muted ? '🔇' : '🔊';
@@ -298,13 +306,13 @@ function chapterRows(el, onlyCurrent) {
     const c = CHAPTERS[i], done = Math.max(0, Math.min(10, level - 1 - i * 10)), lock = i > cur;
     const range = `${i * 10 + 1}–${i * 10 + 10}`;
     return `<div class="ch${i === cur ? ' cur' : ''}${lock ? ' lock' : ''}">
-      <div class="t"><span>${lock ? '🔒 ' : done === 10 ? '✓ ' : ''}${c.name}</span><span>${lock ? 'poz. ' + range : done + ' / 10'}</span></div>
+      <div class="t"><span>${lock ? '🔒 ' : done === 10 ? '✓ ' : ''}${c.name}</span><span>${lock ? tr('poz. ', 'lv. ') + range : done + ' / 10'}</span></div>
       <div class="s">${c.note}</div>${lock ? '' : `<div class="bar"><i style="width:${done * 10}%"></i></div>`}</div>`;
-  }).join('') + (level > MAX_LEVEL ? `<div class="ch cur"><div class="t"><span>Bez końca</span><span>poz. ${level}</span></div><div class="s">wszystkie rozdziały ukończone — kolejne poziomy są losowane</div></div>` : '');
+  }).join('') + (level > MAX_LEVEL ? `<div class="ch cur"><div class="t"><span>${tr('Bez końca', 'Endless')}</span><span>${tr('poz. ', 'lv. ')}${level}</span></div><div class="s">${tr('wszystkie rozdziały ukończone, kolejne poziomy są losowane', 'all chapters complete, new levels are generated')}</div></div>` : '');
 }
 function showMenu() {
   state = 'menu';
-  $('play').textContent = level > 1 ? 'Graj · poziom ' + level : 'Graj';
+  $('play').textContent = level > 1 ? tr('Graj · poziom ', 'Play · level ') + level : tr('Graj', 'Play');
   chapterRows($('chapters'), false);
   $('menu').classList.add('show');
 }
@@ -322,10 +330,11 @@ function begin() {
 function win() {
   const done = level; level++; store.set('sr_level', level);
   const chapterDone = done % 10 === 0 && done <= MAX_LEVEL;
-  $('winT').textContent = chapterDone ? 'Rozdział ukończony!' : 'Rozkręcone!';
+  $('winT').textContent = chapterDone ? tr('Rozdział ukończony!', 'Chapter complete!') : tr('Rozkręcone!', 'All unscrewed!');
   $('winInfo').textContent = chapterDone
-    ? (done === MAX_LEVEL ? 'Wszystkie 100 poziomów za Tobą! Dalej czekają poziomy bez końca.' : `„${CHAPTERS[chapterOf(done)].name}” zaliczony. Następny: „${CHAPTERS[chapterOf(level)].name}”.`)
-    : `Poziom ${done} ukończony.`;
+    ? (done === MAX_LEVEL ? tr('Wszystkie 100 poziomów za Tobą! Dalej czekają poziomy bez końca.', 'All 100 levels done! Endless levels await.')
+      : tr(`„${CHAPTERS[chapterOf(done)].name}” zaliczony. Następny: „${CHAPTERS[chapterOf(level)].name}”.`, `“${CHAPTERS[chapterOf(done)].name}” complete. Next: “${CHAPTERS[chapterOf(level)].name}”.`))
+    : tr(`Poziom ${done} ukończony.`, `Level ${done} complete.`);
   chapterRows($('winChap'), true);
   $('win').classList.add('show'); S.win();
 }
@@ -518,6 +527,20 @@ $('next').onclick = () => { $('win').classList.remove('show'); begin(); };
 $('retry').onclick = () => { $('lose').classList.remove('show'); startLevel(); };
 
 function loop(t) { draw(t); requestAnimationFrame(loop); }
+function applyTexts() {
+  document.title = tr('Śrubki', 'Bolts & Boards');
+  $('title').textContent = tr('Śrubki', 'Bolts & Boards');
+  $('howto').textContent = tr('Stuknij śrubkę, żeby ją wykręcić. Trafi do skrzynki w swoim kolorze albo na półkę. Zasłoniętych śrubek nie da się ruszyć.',
+    'Tap a screw to unscrew it. It goes into the box of its colour or onto the shelf. Covered screws can’t be moved.');
+  $('restartL').textContent = tr('Od nowa', 'Restart'); $('slotL').textContent = tr('Miejsce', 'Slot');
+  $('newL').textContent = tr('Nowość', 'New'); $('introGo').textContent = tr('Rozumiem', 'Got it'); $('next').textContent = tr('Dalej', 'Next');
+  $('loseT').textContent = tr('Półka pełna!', 'Shelf is full!');
+  $('loseP').textContent = tr('Zabrakło miejsca na śrubki. Najpierw kręć te, które pasują do skrzynek, i zdejmuj deski, które zasłaniają najwięcej.',
+    'No room left for screws. Unscrew the ones that match a box first, and take off the boards that cover the most.');
+  $('retry').textContent = tr('Jeszcze raz', 'Try again');
+  $('snd').setAttribute('aria-label', tr('Dźwięk', 'Sound'));
+}
+applyTexts();
 resize(); hud(); showMenu(); requestAnimationFrame(loop);
 document.addEventListener('visibilitychange', () => { if (document.hidden && actx) actx.suspend(); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
