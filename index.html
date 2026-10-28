@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#1d2433">
+<title>Śrubki</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  html, body { margin: 0; height: 100%; background: #1d2433; overflow: hidden; touch-action: none;
+    user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+    font-family: system-ui, "Segoe UI", sans-serif; color: #eef2fa; }
+  #cv { display: block; position: fixed; inset: 0; width: 100%; height: 100%; }
+  #top { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center;
+    padding: calc(10px + env(safe-area-inset-top)) 14px 0; pointer-events: none; }
+  #top > * { pointer-events: auto; }
+  #lvl { font-weight: 900; font-size: 20px; color: #ffd166; text-align: center; }
+  #chap { font-size: 12px; color: #9aa6c4; text-align: center; font-weight: 600; }
+  #bottom { position: fixed; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom)); display: flex; justify-content: center; gap: 12px; }
+  .btn { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.16); color: #eef2fa;
+    border-radius: 16px; padding: 10px 14px; font: 600 15px system-ui, sans-serif; cursor: pointer; min-width: 44px; }
+  .btn:active { transform: scale(.95); }
+  .btn[disabled] { opacity: .35; }
+  .btn .n { display: inline-block; margin-left: 6px; background: #ffd166; color: #2a1f00; border-radius: 9px; padding: 0 6px; font-size: 12px; }
+  .ov { position: fixed; inset: 0; display: none; place-items: center; background: rgba(12,16,26,.8);
+    backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); overflow-y: auto; }
+  .ov.show { display: grid; }
+  .card { text-align: center; padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)); max-width: 340px; width: 100%; box-sizing: border-box; }
+  .card h1 { margin: 0 0 4px; font-size: 46px; color: #ffd166; text-shadow: 0 3px 0 #8a5a00; }
+  .card h2 { margin: 0 0 8px; font-size: 28px; color: #ffd166; }
+  .card p { color: #c9d2e6; margin: 8px 0 18px; line-height: 1.45; }
+  .big { background: #ffd166; color: #2a1f00; border: 0; border-radius: 22px; padding: 14px 34px;
+    font: 800 19px system-ui, sans-serif; box-shadow: 0 5px 0 #b38200; cursor: pointer; }
+  .big:active { transform: translateY(3px); box-shadow: 0 2px 0 #b38200; }
+  .chapters { display: grid; gap: 8px; margin: 18px 0 4px; text-align: left; }
+  .ch { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 9px 12px; }
+  .ch.cur { border-color: #ffd166; background: rgba(255,209,102,.1); }
+  .ch.lock { opacity: .55; }
+  .ch .t { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; gap: 8px; }
+  .ch .t span:last-child { color: #9aa6c4; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ch .s { font-size: 12px; color: #9aa6c4; margin-top: 2px; }
+  .bar { height: 6px; background: rgba(0,0,0,.35); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: #ffd166; border-radius: 3px; }
+  .new { font-size: 13px; font-weight: 800; letter-spacing: 2px; color: #3ddc84; text-transform: uppercase; }
+  .demo { width: 160px; height: 110px; margin: 6px auto 0; display: block; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="top">
+  <button class="btn" id="snd" aria-label="Dźwięk">🔊</button>
+  <div><div id="lvl">Poziom 1</div><div id="chap"></div></div>
+  <button class="btn" id="menuBtn" aria-label="Menu">☰</button>
+</div>
+<div id="bottom">
+  <button class="btn" id="restart">↻ Od nowa</button>
+  <button class="btn" id="slot">＋ Miejsce<span class="n" id="slotN">1</span></button>
+</div>
+
+<div class="ov show" id="menu"><div class="card">
+  <h1>Śrubki</h1>
+  <p>Stuknij śrubkę, żeby ją wykręcić. Trafi do skrzynki w swoim kolorze albo na półkę. Zasłoniętych śrubek nie da się ruszyć.</p>
+  <button class="big" id="play">Graj</button>
+  <div class="chapters" id="chapters"></div>
+</div></div>
+<div class="ov" id="intro"><div class="card">
+  <div class="new">Nowość</div>
+  <h2 id="introT"></h2>
+  <canvas class="demo" id="demo" width="320" height="220"></canvas>
+  <p id="introP"></p>
+  <button class="big" id="introGo">Rozumiem</button>
+</div></div>
+<div class="ov" id="win"><div class="card">
+  <h2 id="winT">Rozkręcone!</h2>
+  <p id="winInfo"></p>
+  <div class="chapters" id="winChap"></div>
+  <button class="big" id="next">Dalej</button>
+</div></div>
+<div class="ov" id="lose"><div class="card">
+  <h2>Półka pełna!</h2>
+  <p>Zabrakło miejsca na śrubki. Najpierw kręć te, które pasują do skrzynek, i zdejmuj deski, które zasłaniają najwięcej.</p>
+  <button class="big" id="retry">Jeszcze raz</button>
+</div></div>
+
+<script>
+'use strict';
+const COLS = 6, ROWS = 8, SR = .22, MAX_LEVEL = 100;
+const SCREW_COLORS = ['#ff5d6c', '#4da3ff', '#ffd166', '#3ddc84', '#b07cff', '#ff9a3c', '#3fe0e0'];
+const PLANK_COLORS = ['#e9c891', '#a7d8f0', '#f3b3c8', '#c5e3a5', '#d4c4f5', '#f7d6a8', '#b8e6d9', '#f0c4a0'];
+// rozdziały po 10 poziomów; każdy z pierwszych pięciu wprowadza coś nowego
+const CHAPTERS = [
+  { name: 'Warsztat', note: 'proste deski' },
+  { name: 'Kątowniki', note: 'deski w kształcie litery L', feature: 'L',
+    title: 'Kątowniki', text: 'Deski w kształcie litery L zasłaniają więcej. Spadną dopiero, gdy wykręcisz z nich wszystkie śrubki.' },
+  { name: 'Krążki', note: 'okrągłe płytki', feature: 'disc',
+    title: 'Krążki', text: 'Okrągła płytka trzyma się na jednej śrubce, ale zasłania wszystko dookoła.' },
+  { name: 'Ukryte śrubki', note: 'kolor widać dopiero po odsłonięciu', feature: 'hidden',
+    title: 'Ukryte śrubki', text: 'Szare śrubki ze znakiem zapytania pokażą swój kolor, gdy nic ich już nie zasłania.' },
+  { name: 'Kłódki', note: 'śrubki z licznikiem', feature: 'lock',
+    title: 'Kłódki', text: 'Śrubka z kłódką otworzy się po wykręceniu tylu innych śrubek, ile pokazuje licznik.' },
+  { name: 'Fabryka', note: 'więcej kolorów' },
+  { name: 'Hala maszyn', note: 'gęstsze warstwy' },
+  { name: 'Wieża zegarowa', note: 'mniej podpowiedzi' },
+  { name: 'Zegarmistrz', note: 'wszystko naraz' },
+  { name: 'Mistrz śrubek', note: 'ostatni sprawdzian' },
+];
+const chapterOf = lv => Math.min(Math.floor((lv - 1) / 10), CHAPTERS.length - 1);
+const featureFrom = f => CHAPTERS.findIndex(c => c.feature === f) * 10 + 1;
+
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+let level = store.get('sr_level', 1), muted = store.get('sr_muted', false), seen = store.get('sr_seen', []);
+
+// --- dźwięk ---
+let actx = null;
+function audio() {
+  if (muted) return null;
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function tone(freq, dur = .15, type = 'sine', vol = .1, delay = 0, slide = 0) {
+  const a = audio(); if (!a) return;
+  const t = a.currentTime + delay, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t); if (slide) o.frequency.exponentialRampToValueAtTime(freq * slide, t + dur);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+}
+const S = {
+  unscrew: () => { for (let i = 0; i < 4; i++) tone(900 + i * 140, .04, 'square', .025, i * .035); },
+  blocked: () => tone(150, .14, 'square', .05),
+  reveal: () => tone(1250, .12, 'sine', .06),
+  unlock: () => { tone(700, .08, 'square', .04); tone(1050, .14, 'triangle', .06, .07); },
+  box: () => [660, 880, 1100].forEach((f, i) => tone(f, .18, 'triangle', .07, i * .06)),
+  fall: () => tone(300, .5, 'sine', .08, 0, .35),
+  win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .35, 'triangle', .09, i * .11)),
+  lose: () => [330, 262, 196].forEach((f, i) => tone(f, .35, 'triangle', .08, i * .15)),
+};
+const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+
+// --- geometria ---
+function rng(seed) { return () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; }
+function distSeg(px, py, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+  let t = l2 ? ((px - a.x) * dx + (py - a.y) * dy) / l2 : 0; t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (a.x + dx * t), py - (a.y + dy * t));
+}
+const covers = (p, x, y) => p.segs.some(s => distSeg(x, y, s.a, s.b) < p.hw + SR);
+const DIRS = [[1, 0], [0, 1], [1, 1], [1, -1], [-1, 0], [0, -1], [-1, -1], [-1, 1]];
+const P = (x, y) => ({ x: x + .5, y: y + .5 });
+const inside = (x, y) => x >= 0 && x < COLS && y >= 0 && y < ROWS;
+
+// --- poziomy ---
+function params(lv) {
+  return {
+    nPlanks: Math.min(5 + Math.floor(lv / 6), 18),
+    nColors: Math.min(3 + Math.floor(lv / 12), SCREW_COLORS.length),
+    swaps: Math.min(Math.floor(lv / 6), 14),
+    cover: Math.min(.55 + lv * .01, .92),
+    pL: lv >= featureFrom('L') ? .3 : 0,
+    pDisc: lv >= featureFrom('disc') ? .18 : 0,
+    pHidden: lv >= featureFrom('hidden') ? Math.min(.35 + (lv - 31) * .01, .7) : 0,
+    pLock: lv >= featureFrom('lock') ? Math.min(.08 + (lv - 41) * .003, .2) : 0,
+  };
+}
+function randPlank(r, pr) {
+  const x = Math.floor(r() * COLS), y = Math.floor(r() * ROWS), roll = r();
+  if (roll < pr.pDisc) return { kind: 'disc', segs: [{ a: P(x, y), b: P(x, y) }], hw: .78, pts: [[x, y]] };
+  if (roll < pr.pDisc + pr.pL) {
+    const [dx, dy] = DIRS[[0, 1, 4, 5][Math.floor(r() * 4)]], l1 = 1 + Math.floor(r() * 2), l2 = 1 + Math.floor(r() * 2), s = r() < .5 ? 1 : -1;
+    const cx = x + dx * l1, cy = y + dy * l1, ex = cx + dy * l2 * s, ey = cy + dx * l2 * s;
+    if (!inside(cx, cy) || !inside(ex, ey)) return null;
+    return { kind: 'L', segs: [{ a: P(x, y), b: P(cx, cy) }, { a: P(cx, cy), b: P(ex, ey) }], hw: .38, pts: [[x, y], [ex, ey], ...(r() < .5 ? [[cx, cy]] : [])] };
+  }
+  const [dx, dy] = DIRS[Math.floor(r() * 4)], len = 1 + Math.floor(r() * 3), x2 = x + dx * len, y2 = y + dy * len;
+  if (!inside(x2, y2)) return null;
+  const pts = [[x, y], [x2, y2]];
+  if (len === 2 && r() < .5) pts.push([x + dx, y + dy]);
+  if (len === 3 && r() < .5) { const k = r() < .5 ? 1 : 2; pts.push([x + dx * k, y + dy * k]); }
+  return { kind: 'bar', segs: [{ a: P(x, y), b: P(x2, y2) }], hw: .4, pts };
+}
+
+function makeLevel(lv) {
+  const r = rng(lv * 104729 + 7), pr = params(lv);
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const used = new Set(), planks = [];
+    for (let tries = 0; planks.length < pr.nPlanks && tries < 2500; tries++) {
+      const pl = randPlank(r, pr);
+      if (!pl || pl.pts.some(([a, b]) => used.has(a + ',' + b))) continue;
+      // większość desek ma zasłaniać jakąś śrubkę niżej — inaczej nie ma łamigłówki
+      const hides = planks.some(q => q.screws.some(sc => covers(pl, sc.x, sc.y)));
+      if (!hides && planks.length >= 2 && r() < pr.cover) continue;
+      pl.pts.forEach(([a, b]) => used.add(a + ',' + b));
+      const z = planks.length;
+      Object.assign(pl, { z, col: PLANK_COLORS[z % PLANK_COLORS.length], alive: true, screws: pl.pts.map(([a, b]) => ({ ...P(a, b), z })) });
+      planks.push(pl);
+    }
+    const all = planks.flatMap(p => p.screws);
+    if (all.length % 3 || planks.length < Math.min(pr.nPlanks, 5)) continue;
+    // kolejność, w której da się wszystko odkręcić (symulacja od góry)
+    const removed = new Set(), order = [], alive = planks.map(() => true);
+    while (order.length < all.length) {
+      const free = all.filter(s => !removed.has(s) && !planks.some(q => alive[q.z] && q.z > s.z && covers(q, s.x, s.y)));
+      const s = free[Math.floor(r() * free.length)];
+      removed.add(s); order.push(s);
+      if (planks[s.z].screws.every(x => removed.has(x))) alive[s.z] = false;
+    }
+    // kolory: trójkami według kolejności, potem kilka zamian dla trudności
+    const queue = [];
+    for (let i = 0; i < order.length; i += 3) {
+      let c; do c = Math.floor(r() * pr.nColors); while (queue.length && c === queue[queue.length - 1] && pr.nColors > 1);
+      queue.push(c); order[i].c = order[i + 1].c = order[i + 2].c = c;
+    }
+    for (let k = 0; k < pr.swaps; k++) {
+      const i = Math.floor(r() * order.length), j = Math.min(order.length - 1, i + 1 + Math.floor(r() * 4));
+      [order[i].c, order[j].c] = [order[j].c, order[i].c];
+    }
+    // kłódka: licznik nigdy nie przekracza liczby śrubek wykręconych wcześniej w poprawnej kolejności
+    order.forEach((s, i) => { s.lock = i >= 4 && r() < pr.pLock ? Math.max(3, Math.min(i, 3 + Math.floor(r() * 6))) : 0; });
+    // ukryte: tylko śrubki zasłonięte na starcie
+    for (const s of all) s.hidden = r() < pr.pHidden && planks.some(q => q.z > s.z && covers(q, s.x, s.y));
+    return { planks, queue };
+  }
+}
+
+// --- stan ---
+let planks, queue, boxes, leaving, shelf, shelfCap, slotLeft, state = 'menu', falling = [], sparks = [], removedCount = 0;
+function startLevel() {
+  const L = makeLevel(level);
+  planks = L.planks; queue = L.queue.slice();
+  boxes = [newBox(), newBox()]; leaving = []; shelf = []; shelfCap = 5; slotLeft = 1; falling = []; sparks = []; removedCount = 0;
+  for (const p of planks) for (const s of p.screws) { s.state = 'board'; s.px = null; s.spin = 0; s.shake = 0; s.wasLocked = !!s.lock; }
+  state = 'play'; layout(); hud();
+}
+function newBox() { return queue.length ? { c: queue.shift(), screws: [], born: performance.now() } : null; }
+function hud() {
+  $('lvl').textContent = 'Poziom ' + level;
+  $('chap').textContent = CHAPTERS[chapterOf(level)].name;
+  $('slotN').textContent = slotLeft; $('slot').disabled = !slotLeft || state !== 'play';
+  $('snd').textContent = muted ? '🔇' : '🔊';
+}
+const blocked = s => planks.some(q => q.alive && q.z > s.z && covers(q, s.x, s.y));
+const locked = s => s.lock > removedCount;
+
+function tapScrew(s) {
+  if (blocked(s) || locked(s)) { s.shake = performance.now(); S.blocked(); buzz(20); return; }
+  const bi = boxes.findIndex(b => b && b.c === s.c && b.screws.length < 3);
+  if (bi >= 0) { boxes[bi].screws.push(s); s.state = 'box'; }
+  else if (shelf.length < shelfCap) { shelf.push(s); s.state = 'shelf'; }
+  else return;
+  s.spin = 1; s.hidden = false; removedCount++; S.unscrew(); buzz(8);
+  const p = planks[s.z];
+  if (p.screws.every(x => x.state !== 'board')) {
+    p.alive = false; S.fall();
+    falling.push({ p, ox: 0, oy: 0, vx: (Math.random() - .5) * 2, vy: -1, rot: 0, vr: (Math.random() - .5) * .05 });
+  }
+  setTimeout(settle, 380);
+}
+function settle() {
+  if (state !== 'play') return;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let i = 0; i < 2; i++) {
+      const b = boxes[i];
+      if (b && b.screws.length === 3) {
+        leaving.push({ b, i, t0: performance.now() }); S.box(); buzz([10, 30, 10]);
+        boxes[i] = newBox(); changed = true;
+      }
+      const nb = boxes[i];
+      if (nb) for (let k = 0; k < shelf.length && nb.screws.length < 3; k++) {
+        if (shelf[k].c === nb.c) { const s = shelf.splice(k, 1)[0]; nb.screws.push(s); s.state = 'box'; k--; changed = true; }
+      }
+    }
+  }
+  const left = planks.some(p => p.screws.some(s => s.state === 'board'));
+  if (!left && !shelf.length) { state = 'won'; setTimeout(win, 600); return; }
+  if (shelf.length >= shelfCap) {
+    const playable = planks.some(p => p.screws.some(s => s.state === 'board' && !blocked(s) && !locked(s) && boxes.some(b => b && b.c === s.c && b.screws.length < 3)));
+    if (!playable) { state = 'lost'; setTimeout(lose, 500); }
+  }
+  hud();
+}
+
+// --- ekrany ---
+function chapterRows(el, onlyCurrent) {
+  const cur = chapterOf(level);
+  const list = onlyCurrent ? [cur] : CHAPTERS.map((_, i) => i);
+  el.innerHTML = list.map(i => {
+    const c = CHAPTERS[i], done = Math.max(0, Math.min(10, level - 1 - i * 10)), lock = i > cur;
+    const range = `${i * 10 + 1}–${i * 10 + 10}`;
+    return `<div class="ch${i === cur ? ' cur' : ''}${lock ? ' lock' : ''}">
+      <div class="t"><span>${lock ? '🔒 ' : done === 10 ? '✓ ' : ''}${c.name}</span><span>${lock ? 'poz. ' + range : done + ' / 10'}</span></div>
+      <div class="s">${c.note}</div>${lock ? '' : `<div class="bar"><i style="width:${done * 10}%"></i></div>`}</div>`;
+  }).join('') + (level > MAX_LEVEL ? `<div class="ch cur"><div class="t"><span>Bez końca</span><span>poz. ${level}</span></div><div class="s">wszystkie rozdziały ukończone — kolejne poziomy są losowane</div></div>` : '');
+}
+function showMenu() {
+  state = 'menu';
+  $('play').textContent = level > 1 ? 'Graj · poziom ' + level : 'Graj';
+  chapterRows($('chapters'), false);
+  $('menu').classList.add('show');
+}
+function begin() {
+  $('menu').classList.remove('show');
+  const ch = CHAPTERS[chapterOf(level)];
+  if (ch.feature && !seen.includes(ch.feature) && level <= MAX_LEVEL) {
+    seen.push(ch.feature); store.set('sr_seen', seen);
+    $('introT').textContent = ch.title; $('introP').textContent = ch.text;
+    drawDemo(ch.feature); $('intro').classList.add('show');
+    return;
+  }
+  startLevel();
+}
+function win() {
+  const done = level; level++; store.set('sr_level', level);
+  const chapterDone = done % 10 === 0 && done <= MAX_LEVEL;
+  $('winT').textContent = chapterDone ? 'Rozdział ukończony!' : 'Rozkręcone!';
+  $('winInfo').textContent = chapterDone
+    ? (done === MAX_LEVEL ? 'Wszystkie 100 poziomów za Tobą! Dalej czekają poziomy bez końca.' : `„${CHAPTERS[chapterOf(done)].name}” zaliczony. Następny: „${CHAPTERS[chapterOf(level)].name}”.`)
+    : `Poziom ${done} ukończony.`;
+  chapterRows($('winChap'), true);
+  $('win').classList.add('show'); S.win();
+}
+function lose() { $('lose').classList.add('show'); S.lose(); buzz(80); }
+
+// --- układ ---
+let W, H, DPR, u, ox, oy, boxY, boxW, shelfY;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2.5);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  layout();
+}
+function layout() {
+  boxY = 70; boxW = Math.min(160, W * .42); shelfY = boxY + 96;
+  const top = shelfY + 46, bottom = 76;
+  u = Math.min((W - 24) / COLS, (H - top - bottom) / ROWS);
+  ox = (W - u * COLS) / 2; oy = top + ((H - top - bottom) - u * ROWS) / 2;
+}
+addEventListener('resize', resize);
+const boxX = i => W / 2 + (i === 0 ? -1 : 1) * (boxW / 2 + 8);
+function holeXY(i, k) { return { x: boxX(i) + (k - 1) * boxW * .28, y: boxY + 30 }; }
+function shelfXY(k) { const sw = Math.min(46, (W - 30) / shelfCap); return { x: W / 2 + (k - (shelfCap - 1) / 2) * sw, y: shelfY }; }
+
+// --- rysowanie ---
+function rr(c, x, y, w, h, r) { c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function screw(c, x, y, r, col, ang, opts = {}) {
+  c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.arc(x + r * .12, y + r * .18, r, 0, 7); c.fill();
+  const g = c.createRadialGradient(x - r * .35, y - r * .35, r * .1, x, y, r);
+  g.addColorStop(0, '#fff'); g.addColorStop(.25, col); g.addColorStop(1, col);
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+  c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = Math.max(1, r * .12); c.stroke();
+  if (opts.hidden) {
+    c.fillStyle = '#2b3242'; c.font = `900 ${r * 1.2}px system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('?', x, y + r * .05);
+  } else {
+    c.save(); c.translate(x, y); c.rotate(ang);
+    c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = r * .22; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(-r * .5, 0); c.lineTo(r * .5, 0); c.moveTo(0, -r * .5); c.lineTo(0, r * .5); c.stroke();
+    c.restore();
+  }
+  if (opts.lock) {
+    // kłódka z licznikiem
+    const lx = x + r * .75, ly = y - r * .75, s = r * .62;
+    c.strokeStyle = '#d7dbe6'; c.lineWidth = s * .28;
+    c.beginPath(); c.arc(lx, ly - s * .35, s * .45, Math.PI, 0); c.stroke();
+    c.fillStyle = '#f2c14e'; c.beginPath(); rr(c, lx - s * .75, ly - s * .4, s * 1.5, s * 1.25, s * .25); c.fill();
+    c.fillStyle = '#3a2a00'; c.font = `900 ${s * 1.05}px system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(opts.lock, lx, ly + s * .24);
+  }
+}
+const plankCenter = p => { const pts = p.segs.flatMap(s => [s.a, s.b]); return { x: pts.reduce((a, q) => a + q.x, 0) / pts.length, y: pts.reduce((a, q) => a + q.y, 0) / pts.length }; };
+function plankPath(c, p, U, X, Y) {
+  c.beginPath();
+  for (const s of p.segs) {
+    const ax = X + s.a.x * U, ay = Y + s.a.y * U, bx = X + s.b.x * U, by = Y + s.b.y * U;
+    const len = Math.hypot(bx - ax, by - ay), w = p.hw * 2 * U;
+    c.save(); c.translate((ax + bx) / 2, (ay + by) / 2); c.rotate(Math.atan2(by - ay, bx - ax));
+    rr(c, -len / 2 - w / 2, -w / 2, len + w, w, w / 2);
+    c.restore();
+  }
+}
+function drawPlank(c, p, U, X, Y, dx = 0, dy = 0, rot = 0) {
+  const cen = plankCenter(p), cx = X + cen.x * U, cy = Y + cen.y * U;
+  c.save(); c.translate(cx + dx, cy + dy); c.rotate(rot); c.translate(-cx, -cy);
+  plankPath(c, p, U, X, Y);
+  c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 10; c.shadowOffsetY = 4;
+  c.globalAlpha = .9; c.fillStyle = p.col; c.fill('nonzero'); c.globalAlpha = 1;
+  c.shadowColor = 'transparent'; c.shadowBlur = 0; c.shadowOffsetY = 0;
+  c.strokeStyle = 'rgba(0,0,0,.28)'; c.lineWidth = 2; c.stroke();
+  for (const s of p.screws) { c.fillStyle = 'rgba(30,25,20,.45)'; c.beginPath(); c.arc(X + s.x * U, Y + s.y * U, SR * U * .95, 0, 7); c.fill(); }
+  c.restore();
+}
+function target(s, t) {
+  if (s.state === 'box') {
+    for (let i = 0; i < 2; i++) { const b = boxes[i]; if (b) { const k = b.screws.indexOf(s); if (k >= 0) return holeXY(i, k); } }
+    for (const L of leaving) { const k = L.b.screws.indexOf(s); if (k >= 0) { const h = holeXY(L.i, k), e = Math.min(1, (t - L.t0) / 450); return { x: h.x, y: h.y - e * e * 160 }; } }
+  }
+  if (s.state === 'shelf') return shelfXY(shelf.indexOf(s));
+  return { x: ox + s.x * u, y: oy + s.y * u };
+}
+
+function draw(t) {
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#232b3d'); g.addColorStop(1, '#151a26');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  if (!planks || state === 'menu') return;
+  // tablica z dziurkami
+  ctx.fillStyle = '#2c3549'; ctx.beginPath(); rr(ctx, ox - 10, oy - 10, u * COLS + 20, u * ROWS + 20, 18); ctx.fill();
+  ctx.fillStyle = '#242c3d';
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { ctx.beginPath(); ctx.arc(ox + (x + .5) * u, oy + (y + .5) * u, u * .07, 0, 7); ctx.fill(); }
+  // deski i śrubki warstwami
+  for (const p of planks) {
+    if (!p.alive) continue;
+    drawPlank(ctx, p, u, ox, oy);
+    for (const s of p.screws) if (s.state === 'board') {
+      let x = ox + s.x * u;
+      if (s.shake) { const k = (t - s.shake) / 300; if (k > 1) s.shake = 0; else x += Math.sin(k * 35) * 4 * (1 - k); }
+      if (s.hidden && !blocked(s)) { s.hidden = false; S.reveal(); burst(x, oy + s.y * u, SCREW_COLORS[s.c]); }
+      if (s.wasLocked && !locked(s)) { s.wasLocked = false; S.unlock(); burst(x, oy + s.y * u, '#f2c14e'); }
+      screw(ctx, x, oy + s.y * u, SR * u, s.hidden ? '#8b93a7' : SCREW_COLORS[s.c], .4, { hidden: s.hidden, lock: locked(s) ? s.lock - removedCount : 0 });
+    }
+  }
+  // spadające deski
+  for (let i = falling.length - 1; i >= 0; i--) {
+    const f = falling[i];
+    f.vy += .45; f.ox += f.vx; f.oy += f.vy; f.rot += f.vr;
+    if (oy + f.oy > H + 300) { falling.splice(i, 1); continue; }
+    drawPlank(ctx, f.p, u, ox, oy, f.ox, f.oy, f.rot);
+  }
+  // skrzynki
+  const drawBox = (b, i, dy, alpha) => {
+    const x = boxX(i) - boxW / 2, c = SCREW_COLORS[b.c];
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = c; ctx.beginPath(); rr(ctx, x, boxY + dy, boxW, 58, 14); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); rr(ctx, x + 4, boxY + dy + 4, boxW - 8, 50, 11); ctx.fill();
+    for (let k = 0; k < 3; k++) { const h = holeXY(i, k); ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(h.x, h.y + dy, 13, 0, 7); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  };
+  for (let i = 0; i < 2; i++) if (boxes[i]) { const k = Math.min(1, (t - boxes[i].born) / 300); drawBox(boxes[i], i, (1 - k) * -40, k); }
+  for (let i = leaving.length - 1; i >= 0; i--) {
+    const L = leaving[i], k = (t - L.t0) / 450;
+    if (k >= 1) { leaving.splice(i, 1); continue; }
+    drawBox(L.b, L.i, -k * k * 160, 1 - k);
+  }
+  // półka
+  ctx.fillStyle = '#2c3549';
+  const s0 = shelfXY(0), s1 = shelfXY(shelfCap - 1);
+  ctx.beginPath(); rr(ctx, s0.x - 24, shelfY - 22, s1.x - s0.x + 48, 44, 14); ctx.fill();
+  for (let k = 0; k < shelfCap; k++) {
+    const p = shelfXY(k); ctx.fillStyle = shelf.length >= shelfCap - 1 && k >= shelf.length ? 'rgba(255,93,108,.35)' : '#1c2333';
+    ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, 7); ctx.fill();
+  }
+  // śrubki w ruchu / w skrzynkach / na półce
+  const R = Math.min(SR * u, 13);
+  for (const s of [...boxes.flatMap(b => b ? b.screws : []), ...leaving.flatMap(L => L.b.screws), ...shelf]) {
+    const tg = target(s, t);
+    if (s.px == null) { s.px = ox + s.x * u; s.py = oy + s.y * u; }
+    s.px += (tg.x - s.px) * .22; s.py += (tg.y - s.py) * .22;
+    const moving = Math.hypot(tg.x - s.px, tg.y - s.py) > 1;
+    if (moving) s.spin += .5;
+    screw(ctx, s.px, s.py - (moving ? 6 : 0), R, SCREW_COLORS[s.c], s.spin);
+  }
+  // iskry
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const p = sparks[i]; p.x += p.vx; p.y += p.vy; p.vy += .15; p.life -= .03;
+    if (p.life <= 0) { sparks.splice(i, 1); continue; }
+    ctx.globalAlpha = p.life; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 2.4, 0, 7); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+function burst(x, y, c) { for (let i = 0; i < 12; i++) sparks.push({ x, y, vx: (Math.random() - .5) * 5, vy: -Math.random() * 4, life: 1, c }); }
+
+// mały obrazek na ekranie „Nowość”
+function drawDemo(f) {
+  const c = $('demo').getContext('2d'), U = 52;
+  c.clearRect(0, 0, 320, 220);
+  const base = { segs: [{ a: { x: .7, y: 1.2 }, b: { x: 4.6, y: 1.2 } }], hw: .4, col: '#a7d8f0', screws: [{ x: .7, y: 1.2 }, { x: 4.6, y: 1.2 }] };
+  const shapes = {
+    L: { segs: [{ a: { x: 1.2, y: .7 }, b: { x: 1.2, y: 3.3 } }, { a: { x: 1.2, y: 3.3 }, b: { x: 4.6, y: 3.3 } }], hw: .38, col: '#f3b3c8', screws: [{ x: 1.2, y: .7 }, { x: 4.6, y: 3.3 }] },
+    disc: { segs: [{ a: { x: 3, y: 2.2 }, b: { x: 3, y: 2.2 } }], hw: .78, col: '#c5e3a5', screws: [{ x: 3, y: 2.2 }] },
+  };
+  drawPlank(c, base, U, 0, 0);
+  for (const s of base.screws) screw(c, s.x * U, s.y * U, SR * U, '#4da3ff', .4);
+  if (shapes[f]) { drawPlank(c, shapes[f], U, 0, 0); for (const s of shapes[f].screws) screw(c, s.x * U, s.y * U, SR * U, '#ff5d6c', .4); }
+  if (f === 'hidden') { const top = { segs: [{ a: { x: 2.6, y: .4 }, b: { x: 2.6, y: 3.6 } }], hw: .4, col: '#f7d6a8', screws: [{ x: 2.6, y: .4 }, { x: 2.6, y: 3.6 }] };
+    screw(c, 2.6 * U, 1.2 * U, SR * U, '#8b93a7', .4, { hidden: true }); drawPlank(c, top, U, 0, 0);
+    for (const s of top.screws) screw(c, s.x * U, s.y * U, SR * U, '#3ddc84', .4); screw(c, 4.6 * U, 3 * U, SR * U, '#8b93a7', .4, { hidden: true }); }
+  if (f === 'lock') { screw(c, 2.6 * U, 3 * U, SR * U * 1.3, '#ffd166', .4, { lock: 4 }); }
+}
+
+// --- dotyk ---
+cv.addEventListener('pointerdown', e => {
+  if (state !== 'play') return;
+  audio();
+  const x = (e.clientX - ox) / u, y = (e.clientY - oy) / u;
+  let best = null;
+  for (const p of planks) for (const s of p.screws) {
+    if (s.state !== 'board') continue;
+    if (Math.hypot(s.x - x, s.y - y) < .45 && (!best || s.z > best.z)) best = s;
+  }
+  if (best) tapScrew(best);
+});
+$('slot').onclick = () => { if (slotLeft && state === 'play') { slotLeft--; shelfCap++; tone(660, .2, 'sine', .08); hud(); } };
+$('restart').onclick = () => { if (state === 'play' || state === 'lost') { $('lose').classList.remove('show'); startLevel(); } };
+$('menuBtn').onclick = () => { if (state === 'play' || state === 'lost') { $('lose').classList.remove('show'); showMenu(); } };
+$('snd').onclick = () => { muted = !muted; store.set('sr_muted', muted); hud(); };
+$('play').onclick = () => { audio(); begin(); };
+$('introGo').onclick = () => { $('intro').classList.remove('show'); startLevel(); };
+$('next').onclick = () => { $('win').classList.remove('show'); begin(); };
+$('retry').onclick = () => { $('lose').classList.remove('show'); startLevel(); };
+
+function loop(t) { draw(t); requestAnimationFrame(loop); }
+resize(); hud(); showMenu(); requestAnimationFrame(loop);
+document.addEventListener('visibilitychange', () => { if (document.hidden && actx) actx.suspend(); });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
